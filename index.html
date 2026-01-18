@@ -7,7 +7,6 @@
     <title>Quinta dos Porcos</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
@@ -20,7 +19,7 @@
         .alerta.urgente { background: #f8d7da; border-left-color: #dc3545; }
         .alerta.pronta { background: #d1ecf1; border-left-color: #17a2b8; }
         .alerta.recuperacao { background: #d4edda; border-left-color: #28a745; }
-        .alerta.sem_cobrir { background: #ffe0b2; border-left-color: #ff9800; }
+        .alerta.atribuir { background: #e1bee7; border-left-color: #9c27b0; }
         .despesa-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #dc3545; }
         .despesa-card .valor { font-size: 1.3rem; font-weight: bold; color: #dc3545; }
         .despesa-card .categoria { font-size: 0.8rem; color: #666; background: #f0f0f0; padding: 2px 8px; border-radius: 10px; display: inline-block; }
@@ -37,6 +36,7 @@
         .financeiro-card.lucro.negativo .valor { color: #dc3545; }
         .financeiro-card .label { font-size: 0.9rem; color: #666; margin-top: 5px; }
         .btn-alerta { margin-top: 10px; padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: block; }
+        .btn-alerta.purple { background: #9c27b0; }
         .container { padding: 15px; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
         .card-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; color: #2d5016; }
@@ -47,6 +47,7 @@
         .badge-gravida { background: #ffc107; color: #333; }
         .badge-amamentacao { background: #e83e8c; }
         .badge-recuperacao { background: #17a2b8; }
+        .badge-sem-numero { background: #9c27b0; }
         .nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
         .nav-item { flex: 1; padding: 10px 5px; text-align: center; border: none; background: none; cursor: pointer; color: #666; font-size: 0.65rem; }
         .nav-item.active { color: #2d5016; }
@@ -58,10 +59,10 @@
         .btn-warning { background: #ffc107; color: #333; }
         .btn-info { background: #17a2b8; color: white; }
         .btn-success { background: #28a745; color: white; }
+        .btn-purple { background: #9c27b0; color: white; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        .form-group small { color: #666; font-size: 0.8rem; display: block; margin-top: 4px; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
         .modal-content { background: white; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; }
@@ -93,287 +94,56 @@
         .barra-azul { background: #17a2b8; }
         .barra-cinza { background: #6c757d; }
         .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        .grid-stats .stat-card { margin-bottom: 0; }
-        .filtro-container { margin-bottom: 15px; }
-        .filtro-container select { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; }
         .resumo-parto { background: #f8f9fa; border-radius: 8px; padding: 12px; margin: 15px 0; }
         .resumo-parto .linha { display: flex; justify-content: space-between; margin: 5px 0; }
         .resumo-parto .total { border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px; font-weight: bold; }
         .leitao-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; }
+        .leitao-card.sem-numero { border-left: 4px solid #9c27b0; }
         .leitao-info { flex: 1; }
         .leitao-genero { font-size: 1.5rem; margin-right: 10px; }
         .leitao-checkbox { width: 24px; height: 24px; }
-        .loading { text-align: center; padding: 40px; }
-        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #2d5016; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .filtro-container { margin-bottom: 15px; }
+        .filtro-container select { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; }
+        .leitao-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; }
+        .leitao-item input { width: 80px; }
         .offline-banner { background: #dc3545; color: white; text-align: center; padding: 10px; display: none; }
         .offline-banner.show { display: block; }
     </style>
 </head>
 <body>
-    <div id="offline-banner" class="offline-banner">⚠️ Sem ligação à internet</div>
-    
-    <div class="header">
-        <h1>🐷 Quinta dos Porcos</h1>
-    </div>
+    <div id="offline-banner" class="offline-banner">⚠️ Sem ligação</div>
+    <div class="header"><h1>🐷 Quinta dos Porcos</h1></div>
 
-    <!-- Página: Alertas -->
-    <div id="pagina-alertas" class="pagina">
-        <div class="alertas" id="lista-alertas">
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>A carregar...</p>
-            </div>
-        </div>
-    </div>
+    <div id="pagina-alertas" class="pagina"><div class="alertas" id="lista-alertas"><div class="empty"><span>⏳</span>A carregar...</div></div></div>
+    <div id="pagina-porcas" class="pagina hidden"><div class="container"><div class="filtro-container"><select id="filtro-porcas" onchange="filtrarPorcas()"><option value="todas">Todas</option><option value="Cima">Cima (Jovens)</option><option value="Cobricao">Cobrição</option><option value="Parideiras">Parideiras</option><option value="Disponivel">Disponíveis</option><option value="Gravida">Grávidas</option><option value="Amamentacao">Amamentação</option><option value="Recuperacao">Recuperação</option></select></div><div id="lista-porcas"></div></div><button class="fab" onclick="abrirModalNovaPorca()">+</button></div>
+    <div id="pagina-varroes" class="pagina hidden"><div class="container"><div id="lista-varroes"></div></div><button class="fab" onclick="abrirModalNovoVarrao()">+</button></div>
+    <div id="pagina-leitoes" class="pagina hidden"><div class="container"><div id="lista-leitoes"></div><button class="btn btn-success" onclick="abrirModalVenderLeitoes()" id="btn-vender-leitoes" style="display:none;">💰 Vender</button></div></div>
+    <div id="pagina-stats" class="pagina hidden"><div class="container"><div class="grid-stats"><div class="stat-card"><div class="stat-numero" id="stat-total-porcas">0</div><div class="stat-label">Porcas</div></div><div class="stat-card"><div class="stat-numero" id="stat-total-varroes">0</div><div class="stat-label">Varrões</div></div></div><div class="stat-card"><div class="stat-titulo">Estados das Porcas</div><div id="barras-estados"></div></div><div class="stat-card"><div class="stat-titulo">Leitões</div><div class="stat-numero" id="stat-total-leitoes">0</div><div class="stat-label">atualmente</div></div></div></div>
+    <div id="pagina-financeiro" class="pagina hidden"><div class="container"><div class="financeiro-resumo"><div class="financeiro-card receita"><div class="valor" id="total-receitas">€0</div><div class="label">Receitas</div></div><div class="financeiro-card despesa"><div class="valor" id="total-despesas">€0</div><div class="label">Despesas</div></div></div><div class="financeiro-card lucro" id="card-lucro"><div class="valor" id="total-lucro">€0</div><div class="label">Lucro/Prejuízo</div></div><h3 class="section-title">Despesas Recentes</h3><div id="lista-despesas"></div><button class="btn btn-danger" onclick="abrirModalNovaDespesa()">+ Nova Despesa</button></div></div>
+    <div id="pagina-historico" class="pagina hidden"><div class="container"><div id="lista-historico"></div></div></div>
 
-    <!-- Página: Porcas -->
-    <div id="pagina-porcas" class="pagina hidden">
-        <div class="container">
-            <div class="filtro-container">
-                <select id="filtro-porcas" onchange="filtrarPorcas()">
-                    <option value="todas">Todas as porcas</option>
-                    <option value="Cima">Pocilga de Cima (Jovens)</option>
-                    <option value="Cobricao">Cobrição</option>
-                    <option value="Parideiras">Parideiras</option>
-                    <option value="Disponivel">Disponíveis</option>
-                    <option value="Gravida">Grávidas</option>
-                    <option value="Amamentacao">Em amamentação</option>
-                    <option value="Recuperacao">Em recuperação</option>
-                </select>
-            </div>
-            <div id="lista-porcas"></div>
-        </div>
-        <button class="fab" onclick="abrirModalNovaPorca()">+</button>
-    </div>
-
-    <!-- Página: Varrões -->
-    <div id="pagina-varroes" class="pagina hidden">
-        <div class="container">
-            <div id="lista-varroes"></div>
-        </div>
-        <button class="fab" onclick="abrirModalNovoVarrao()">+</button>
-    </div>
-
-    <!-- Página: Leitões -->
-    <div id="pagina-leitoes" class="pagina hidden">
-        <div class="container">
-            <div id="lista-leitoes"></div>
-            <button class="btn btn-success" onclick="abrirModalVenderLeitoes()" id="btn-vender-leitoes" style="display:none;">
-                💰 Vender Selecionados
-            </button>
-        </div>
-    </div>
-
-    <!-- Página: Estatísticas -->
-    <div id="pagina-stats" class="pagina hidden">
-        <div class="container">
-            <div class="grid-stats">
-                <div class="stat-card">
-                    <div class="stat-numero" id="stat-total-porcas">0</div>
-                    <div class="stat-label">Porcas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-numero" id="stat-total-varroes">0</div>
-                    <div class="stat-label">Varrões</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-titulo">Estados das Porcas</div>
-                <div id="barras-estados"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-titulo">Leitões</div>
-                <div class="stat-numero" id="stat-total-leitoes">0</div>
-                <div class="stat-label">leitões atualmente</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Página: Financeiro -->
-    <div id="pagina-financeiro" class="pagina hidden">
-        <div class="container">
-            <div class="financeiro-resumo">
-                <div class="financeiro-card receita">
-                    <div class="valor" id="total-receitas">€0</div>
-                    <div class="label">Receitas</div>
-                </div>
-                <div class="financeiro-card despesa">
-                    <div class="valor" id="total-despesas">€0</div>
-                    <div class="label">Despesas</div>
-                </div>
-            </div>
-            <div class="financeiro-card lucro" id="card-lucro">
-                <div class="valor" id="total-lucro">€0</div>
-                <div class="label">Lucro/Prejuízo</div>
-            </div>
-            <h3 class="section-title">Despesas Recentes</h3>
-            <div id="lista-despesas"></div>
-            <button class="btn btn-danger" onclick="abrirModalNovaDespesa()">+ Nova Despesa</button>
-        </div>
-    </div>
-
-    <!-- Página: Histórico -->
-    <div id="pagina-historico" class="pagina hidden">
-        <div class="container">
-            <div id="lista-historico"></div>
-        </div>
-    </div>
-
-    <!-- Navegação -->
     <nav class="nav">
-        <button class="nav-item active" onclick="mudarPagina('alertas')">
-            <span>🔔</span>Alertas
-        </button>
-        <button class="nav-item" onclick="mudarPagina('porcas')">
-            <span>🐷</span>Porcas
-        </button>
-        <button class="nav-item" onclick="mudarPagina('varroes')">
-            <span>🐗</span>Varrões
-        </button>
-        <button class="nav-item" onclick="mudarPagina('leitoes')">
-            <span>🐽</span>Leitões
-        </button>
-        <button class="nav-item" onclick="mudarPagina('stats')">
-            <span>📊</span>Stats
-        </button>
-        <button class="nav-item" onclick="mudarPagina('financeiro')">
-            <span>💰</span>€
-        </button>
-        <button class="nav-item" onclick="mudarPagina('historico')">
-            <span>📜</span>Histórico
-        </button>
+        <button class="nav-item active" onclick="mudarPagina('alertas')"><span>🔔</span>Alertas</button>
+        <button class="nav-item" onclick="mudarPagina('porcas')"><span>🐷</span>Porcas</button>
+        <button class="nav-item" onclick="mudarPagina('varroes')"><span>🐗</span>Varrões</button>
+        <button class="nav-item" onclick="mudarPagina('leitoes')"><span>🐽</span>Leitões</button>
+        <button class="nav-item" onclick="mudarPagina('stats')"><span>📊</span>Stats</button>
+        <button class="nav-item" onclick="mudarPagina('financeiro')"><span>💰</span>€</button>
+        <button class="nav-item" onclick="mudarPagina('historico')"><span>📜</span>Histórico</button>
     </nav>
 
-    <!-- Modal: Nova Porca -->
-    <div id="modal-nova-porca" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Adicionar Porca</div>
-            <div class="form-group">
-                <label>Número da Porca</label>
-                <input type="number" id="nova-porca-num" placeholder="Ex: 12">
-            </div>
-            <div class="form-group">
-                <label>Pocilga</label>
-                <select id="nova-porca-pocilga">
-                    <option value="Cima">Cima (Jovem)</option>
-                    <option value="Cobricao">Cobrição (Disponível)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Data de Nascimento (opcional)</label>
-                <input type="date" id="nova-porca-data">
-            </div>
-            <button class="btn btn-primary" onclick="adicionarPorca()">Adicionar</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-nova-porca')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Novo Varrão -->
-    <div id="modal-novo-varrao" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Adicionar Varrão</div>
-            <div class="form-group">
-                <label>Número do Varrão</label>
-                <input type="number" id="novo-varrao-num" placeholder="Ex: 1">
-            </div>
-            <div class="form-group">
-                <label>Data de Nascimento (opcional)</label>
-                <input type="date" id="novo-varrao-data">
-            </div>
-            <button class="btn btn-primary" onclick="adicionarVarrao()">Adicionar</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-novo-varrao')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Detalhes Porca -->
-    <div id="modal-porca" class="modal">
-        <div class="modal-content">
-            <div class="modal-title" id="modal-porca-titulo">Porca #</div>
-            <div id="modal-porca-info"></div>
-            <div id="modal-porca-acoes"></div>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-porca')">Fechar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Cobrição -->
-    <div id="modal-cobricao" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Registar Cobrição</div>
-            <input type="hidden" id="cobricao-porca-num">
-            <div class="form-group">
-                <label>Varrão que cobriu</label>
-                <select id="cobricao-varrao"></select>
-            </div>
-            <button class="btn btn-warning" onclick="registarCobricao()">Registar Cobrição</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-cobricao')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Parto -->
-    <div id="modal-parto" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Registar Parto</div>
-            <input type="hidden" id="parto-porca-num">
-            <div class="form-group">
-                <label>Leitões para VENDER (não especificados)</label>
-                <input type="number" id="parto-vender" value="0" min="0">
-            </div>
-            <div class="form-group">
-                <label>Leitões para FICAR</label>
-                <div id="parto-ficar-container"></div>
-                <button type="button" class="btn btn-info" onclick="adicionarLeitaoFicar()" style="margin-top:10px;">+ Adicionar leitão para ficar</button>
-            </div>
-            <div class="resumo-parto" id="resumo-parto"></div>
-            <button class="btn btn-primary" onclick="registarParto()">Registar Parto</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-parto')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Vender Leitões -->
-    <div id="modal-vender-leitoes" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Vender Leitões</div>
-            <p id="vender-leitoes-info"></p>
-            <div class="form-group">
-                <label>Valor da venda (€)</label>
-                <input type="number" id="vender-leitoes-valor" step="0.01" placeholder="Ex: 150.00">
-            </div>
-            <button class="btn btn-success" onclick="confirmarVendaLeitoes()">Confirmar Venda</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-vender-leitoes')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal: Nova Despesa -->
-    <div id="modal-nova-despesa" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Nova Despesa</div>
-            <div class="form-group">
-                <label>Categoria</label>
-                <select id="despesa-categoria">
-                    <option value="Alimentacao">Alimentação</option>
-                    <option value="Veterinario">Veterinário</option>
-                    <option value="Equipamento">Equipamento</option>
-                    <option value="Manutencao">Manutenção</option>
-                    <option value="Outros">Outros</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Descrição</label>
-                <input type="text" id="despesa-descricao" placeholder="Ex: Ração 50kg">
-            </div>
-            <div class="form-group">
-                <label>Valor (€)</label>
-                <input type="number" id="despesa-valor" step="0.01" placeholder="Ex: 45.50">
-            </div>
-            <button class="btn btn-danger" onclick="adicionarDespesa()">Adicionar Despesa</button>
-            <button class="btn btn-secondary" onclick="fecharModal('modal-nova-despesa')">Cancelar</button>
-        </div>
-    </div>
+    <div id="modal-nova-porca" class="modal"><div class="modal-content"><div class="modal-title">Adicionar Porca</div><div class="form-group"><label>Número</label><input type="number" id="nova-porca-num"></div><div class="form-group"><label>Pocilga</label><select id="nova-porca-pocilga"><option value="Cima">Cima (Jovem)</option><option value="Cobricao">Cobrição (Disponível)</option></select></div><div class="form-group"><label>Nascimento</label><input type="date" id="nova-porca-data"></div><button class="btn btn-primary" onclick="adicionarPorca()">Adicionar</button><button class="btn btn-secondary" onclick="fecharModal('modal-nova-porca')">Cancelar</button></div></div>
+    <div id="modal-novo-varrao" class="modal"><div class="modal-content"><div class="modal-title">Adicionar Varrão</div><div class="form-group"><label>Número</label><input type="number" id="novo-varrao-num"></div><div class="form-group"><label>Estado</label><select id="novo-varrao-estado"><option value="Jovem">Jovem</option><option value="Disponivel">Disponível</option></select></div><div class="form-group"><label>Nascimento</label><input type="date" id="novo-varrao-data"></div><button class="btn btn-primary" onclick="adicionarVarrao()">Adicionar</button><button class="btn btn-secondary" onclick="fecharModal('modal-novo-varrao')">Cancelar</button></div></div>
+    <div id="modal-porca" class="modal"><div class="modal-content"><div class="modal-title" id="modal-porca-titulo">Porca #</div><div id="modal-porca-info"></div><div id="modal-porca-acoes"></div><button class="btn btn-secondary" onclick="fecharModal('modal-porca')">Fechar</button></div></div>
+    <div id="modal-varrao" class="modal"><div class="modal-content"><div class="modal-title" id="modal-varrao-titulo">Varrão #</div><div id="modal-varrao-info"></div><div id="modal-varrao-acoes"></div><button class="btn btn-secondary" onclick="fecharModal('modal-varrao')">Fechar</button></div></div>
+    <div id="modal-cobricao" class="modal"><div class="modal-content"><div class="modal-title">Registar Cobrição</div><input type="hidden" id="cobricao-porca-num"><div class="form-group"><label>Varrão</label><select id="cobricao-varrao"></select></div><button class="btn btn-warning" onclick="registarCobricao()">Registar</button><button class="btn btn-secondary" onclick="fecharModal('modal-cobricao')">Cancelar</button></div></div>
+    <div id="modal-parto" class="modal"><div class="modal-content"><div class="modal-title">Registar Parto</div><input type="hidden" id="parto-porca-num"><h4 style="margin:15px 0 10px;color:#dc3545;">🏷️ Leitões para VENDER</h4><div id="parto-vender-container"></div><button type="button" class="btn btn-warning" onclick="adicionarLeitaoVender()" style="margin-top:10px;">+ Vender</button><h4 style="margin:20px 0 10px;color:#28a745;">🏠 Leitões para FICAR</h4><div id="parto-ficar-container"></div><button type="button" class="btn btn-info" onclick="adicionarLeitaoFicar()" style="margin-top:10px;">+ Ficar</button><div class="resumo-parto" id="resumo-parto"></div><button class="btn btn-primary" onclick="registarParto()">Registar Parto</button><button class="btn btn-secondary" onclick="fecharModal('modal-parto')">Cancelar</button></div></div>
+    <div id="modal-desmame" class="modal"><div class="modal-content"><div class="modal-title">Registar Desmame</div><input type="hidden" id="desmame-porca-num"><p style="margin-bottom:15px;color:#666;">Atribui números aos leitões que ficam:</p><div id="desmame-leitoes-container"></div><div style="background:#fff3cd;padding:10px;border-radius:8px;margin:15px 0;"><small>⚠️ Fêmeas → Porcas jovens | Machos → Varrões jovens</small></div><button class="btn btn-info" onclick="confirmarDesmame()">Confirmar Desmame</button><button class="btn btn-secondary" onclick="fecharModal('modal-desmame')">Cancelar</button></div></div>
+    <div id="modal-vender-leitoes" class="modal"><div class="modal-content"><div class="modal-title">Vender Leitões</div><p id="vender-leitoes-info"></p><div class="form-group"><label>Valor (€)</label><input type="number" id="vender-leitoes-valor" step="0.01"></div><button class="btn btn-success" onclick="confirmarVendaLeitoes()">Confirmar</button><button class="btn btn-secondary" onclick="fecharModal('modal-vender-leitoes')">Cancelar</button></div></div>
+    <div id="modal-atribuir-numero" class="modal"><div class="modal-content"><div class="modal-title">Atribuir Número</div><input type="hidden" id="atribuir-leitao-id"><p id="atribuir-leitao-info"></p><div class="form-group"><label>Número</label><input type="number" id="atribuir-numero"></div><button class="btn btn-purple" onclick="confirmarAtribuirNumero()">Atribuir</button><button class="btn btn-secondary" onclick="fecharModal('modal-atribuir-numero')">Cancelar</button></div></div>
+    <div id="modal-nova-despesa" class="modal"><div class="modal-content"><div class="modal-title">Nova Despesa</div><div class="form-group"><label>Categoria</label><select id="despesa-categoria"><option value="Alimentacao">Alimentação</option><option value="Veterinario">Veterinário</option><option value="Equipamento">Equipamento</option><option value="Manutencao">Manutenção</option><option value="Outros">Outros</option></select></div><div class="form-group"><label>Descrição</label><input type="text" id="despesa-descricao"></div><div class="form-group"><label>Valor (€)</label><input type="number" id="despesa-valor" step="0.01"></div><button class="btn btn-danger" onclick="adicionarDespesa()">Adicionar</button><button class="btn btn-secondary" onclick="fecharModal('modal-nova-despesa')">Cancelar</button></div></div>
 
     <script>
-        // ==================== CONFIGURAÇÃO FIREBASE ====================
-        // IMPORTANTE: Substitui isto com as tuas credenciais do Firebase!
         const firebaseConfig = {
             apiKey: "AIzaSyA_ToriWPqYJ3ELzzRkIXpRoyAjA3Fk5xI",
             authDomain: "gestao-dos-porcos.firebaseapp.com",
@@ -383,901 +153,260 @@
             messagingSenderId: "973161258767",
             appId: "1:973161258767:web:8bb5f9e6bf9bb98fae287a"
         };
-
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ==================== DADOS GLOBAIS ====================
-        let dados = {
-            porcas: [],
-            varroes: [],
-            leitoes: [],
-            historico: [],
-            despesas: [],
-            proximoIdLeitao: 1,
-            proximoIdDespesa: 1
-        };
-
+        let dados = { porcas: [], varroes: [], leitoes: [], historico: [], despesas: [], proximoIdLeitao: 1, proximoIdDespesa: 1 };
         let leitoesSelecionados = [];
 
-        // ==================== FUNÇÕES DE BASE DE DADOS ====================
         function carregarDados() {
-            db.ref('quinta').on('value', (snapshot) => {
-                const val = snapshot.val();
-                if (val) {
-                    dados = {
-                        porcas: val.porcas || [],
-                        varroes: val.varroes || [],
-                        leitoes: val.leitoes || [],
-                        historico: val.historico || [],
-                        despesas: val.despesas || [],
-                        proximoIdLeitao: val.proximoIdLeitao || 1,
-                        proximoIdDespesa: val.proximoIdDespesa || 1
-                    };
-                }
+            db.ref('quinta').on('value', (s) => {
+                const v = s.val();
+                if (v) dados = { porcas: v.porcas||[], varroes: v.varroes||[], leitoes: v.leitoes||[], historico: v.historico||[], despesas: v.despesas||[], proximoIdLeitao: v.proximoIdLeitao||1, proximoIdDespesa: v.proximoIdDespesa||1 };
                 atualizarUI();
-            }, (error) => {
-                console.error("Erro ao carregar dados:", error);
-                alert("Erro ao ligar à base de dados. Verifica a configuração do Firebase.");
             });
         }
-
-        function guardarDados() {
-            return db.ref('quinta').set(dados);
-        }
-
-        // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
-        function mudarPagina(pagina) {
-            document.querySelectorAll('.pagina').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById('pagina-' + pagina).classList.remove('hidden');
-            event.target.closest('.nav-item').classList.add('active');
-            
-            atualizarUI();
-        }
-
-        function fecharModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        // ==================== FUNÇÕES DE UTILIDADE ====================
-        function hoje() {
-            return new Date().toISOString().split('T')[0];
-        }
-
-        function formatarData(dataStr) {
-            if (!dataStr) return '-';
-            const d = new Date(dataStr);
-            return d.toLocaleDateString('pt-PT');
-        }
-
-        function diasEntre(data1, data2) {
-            const d1 = new Date(data1);
-            const d2 = new Date(data2);
-            return Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
-        }
-
-        function adicionarDias(dataStr, dias) {
-            const d = new Date(dataStr);
-            d.setDate(d.getDate() + dias);
-            return d.toISOString().split('T')[0];
-        }
-
-        // ==================== ESTADOS E POCILGAS ====================
-        function getEstadoLabel(porca) {
-            if (!porca.estado) return { texto: 'Desconhecido', classe: 'badge-jovem' };
-            
-            const tipo = porca.estado.tipo || porca.estado;
-            switch(tipo) {
-                case 'Jovem': return { texto: 'Jovem', classe: 'badge-jovem' };
-                case 'Disponivel': return { texto: 'Disponível', classe: 'badge-disponivel' };
-                case 'Gravida': return { texto: `Grávida (parto: ${formatarData(porca.estado.dataParto)})`, classe: 'badge-gravida' };
-                case 'Amamentacao': return { texto: `Amamentação (desmame: ${formatarData(porca.estado.dataDesmame)})`, classe: 'badge-amamentacao' };
-                case 'Recuperacao': return { texto: `Recuperação (até: ${formatarData(porca.estado.dataFim)})`, classe: 'badge-recuperacao' };
-                default: return { texto: tipo, classe: 'badge-jovem' };
+        function guardarDados() { return db.ref('quinta').set(dados); }
+        function mudarPagina(p) { document.querySelectorAll('.pagina').forEach(x=>x.classList.add('hidden')); document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); document.getElementById('pagina-'+p).classList.remove('hidden'); event.target.closest('.nav-item').classList.add('active'); atualizarUI(); }
+        function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+        function hoje() { return new Date().toISOString().split('T')[0]; }
+        function formatarData(d) { return d ? new Date(d).toLocaleDateString('pt-PT') : '-'; }
+        function diasEntre(a,b) { return Math.floor((new Date(b)-new Date(a))/(1000*60*60*24)); }
+        function adicionarDias(d,n) { const x=new Date(d); x.setDate(x.getDate()+n); return x.toISOString().split('T')[0]; }
+        
+        function getEstadoLabel(p) {
+            const t = p.estado?.tipo || p.estado;
+            switch(t) {
+                case 'Jovem': return {texto:'Jovem',classe:'badge-jovem'};
+                case 'Disponivel': return {texto:'Disponível',classe:'badge-disponivel'};
+                case 'Gravida': return {texto:`Grávida (${formatarData(p.estado.dataParto)})`,classe:'badge-gravida'};
+                case 'Amamentacao': return {texto:`Amamentação (${formatarData(p.estado.dataDesmame)})`,classe:'badge-amamentacao'};
+                case 'Recuperacao': return {texto:`Recuperação (${formatarData(p.estado.dataFim)})`,classe:'badge-recuperacao'};
+                default: return {texto:t||'?',classe:'badge-jovem'};
             }
         }
+        function getEstadoVarraoLabel(v) { return (v.estado==='Jovem') ? {texto:'Jovem',classe:'badge-jovem'} : {texto:'Disponível',classe:'badge-disponivel'}; }
+        function getPocilgaLabel(p) { return p==='Cima'?'Pocilga de Cima':p==='Cobricao'?'Cobrição':p==='Parideiras'?'Parideiras':p; }
 
-        function getPocilgaLabel(pocilga) {
-            switch(pocilga) {
-                case 'Cima': return 'Pocilga de Cima';
-                case 'Cobricao': return 'Cobrição';
-                case 'Parideiras': return 'Parideiras';
-                default: return pocilga;
-            }
-        }
-
-        // ==================== ALERTAS ====================
         function gerarAlertas() {
-            const alertas = [];
-            const hojeStr = hoje();
-            
+            const alertas = [], h = hoje();
             dados.porcas.forEach(p => {
-                const estado = p.estado?.tipo || p.estado;
-                
-                // Porcas perto de parir
-                if (estado === 'Gravida' && p.estado.dataParto) {
-                    const diasParto = diasEntre(hojeStr, p.estado.dataParto);
-                    if (diasParto <= 7 && diasParto >= 0) {
-                        alertas.push({
-                            tipo: 'parto',
-                            mensagem: `Porca ${p.num} perto de parir`,
-                            dias: diasParto,
-                            num: p.num,
-                            classe: diasParto <= 3 ? 'urgente' : ''
-                        });
-                    }
-                }
-                
-                // Porcas perto de desmamar
-                if (estado === 'Amamentacao' && p.estado.dataDesmame) {
-                    const diasDesmame = diasEntre(hojeStr, p.estado.dataDesmame);
-                    if (diasDesmame <= 7 && diasDesmame >= 0) {
-                        alertas.push({
-                            tipo: 'desmame',
-                            mensagem: `Porca ${p.num} perto de desmamar`,
-                            dias: diasDesmame,
-                            num: p.num,
-                            classe: diasDesmame <= 3 ? 'urgente' : ''
-                        });
-                    }
-                }
-                
-                // Porcas em recuperação perto de terminar
-                if (estado === 'Recuperacao' && p.estado.dataFim) {
-                    const diasRecup = diasEntre(hojeStr, p.estado.dataFim);
-                    if (diasRecup <= 3 && diasRecup >= 0) {
-                        alertas.push({
-                            tipo: 'recuperacao',
-                            mensagem: `Porca ${p.num} termina recuperação`,
-                            dias: diasRecup,
-                            num: p.num,
-                            classe: 'recuperacao'
-                        });
-                    }
-                }
-                
-                // Porcas velhas (>=8 partos)
-                if (p.numPartos >= 8) {
-                    alertas.push({
-                        tipo: 'velha',
-                        mensagem: `Porca ${p.num} para matadouro (${p.numPartos} partos)`,
-                        num: p.num,
-                        classe: 'urgente'
-                    });
-                }
-                
-                // Porcas jovens prontas (8 meses)
-                if (estado === 'Jovem' && p.dataNascimento) {
-                    const idadeDias = diasEntre(p.dataNascimento, hojeStr);
-                    if (idadeDias >= 240) { // ~8 meses
-                        alertas.push({
-                            tipo: 'pronta',
-                            mensagem: `Porca ${p.num} pronta para reproduzir (8 meses)`,
-                            num: p.num,
-                            classe: 'pronta'
-                        });
-                    }
-                }
+                const e = p.estado?.tipo || p.estado;
+                if (e==='Gravida' && p.estado.dataParto) { const d=diasEntre(h,p.estado.dataParto); if(d<=7&&d>=0) alertas.push({tipo:'parto',mensagem:`Porca ${p.num} perto de parir`,dias:d,num:p.num,classe:d<=3?'urgente':''}); }
+                if (e==='Amamentacao' && p.estado.dataDesmame) { const d=diasEntre(h,p.estado.dataDesmame); if(d<=7&&d>=0) alertas.push({tipo:'desmame',mensagem:`Porca ${p.num} perto de desmamar`,dias:d,num:p.num,classe:d<=3?'urgente':''}); }
+                if (e==='Recuperacao' && p.estado.dataFim) { const d=diasEntre(h,p.estado.dataFim); if(d<=3&&d>=0) alertas.push({tipo:'recuperacao',mensagem:`Porca ${p.num} termina recuperação`,dias:d,num:p.num,classe:'recuperacao'}); }
+                if (p.numPartos>=8) alertas.push({tipo:'velha',mensagem:`Porca ${p.num} para matadouro (${p.numPartos} partos)`,num:p.num,classe:'urgente'});
+                if (e==='Jovem' && p.dataNascimento && diasEntre(p.dataNascimento,h)>=240) alertas.push({tipo:'pronta',mensagem:`Porca ${p.num} pronta para reproduzir`,num:p.num,classe:'pronta'});
             });
-            
+            dados.leitoes.filter(l=>l.destino==='Ficar'&&!l.numeroAtribuido).forEach(l => alertas.push({tipo:'atribuir',mensagem:`Leitão #${l.idLeitao} (${l.genero==='Macho'?'♂':'♀'}) precisa de número`,idLeitao:l.idLeitao,classe:'atribuir'}));
             return alertas;
         }
 
         function renderizarAlertas() {
-            const container = document.getElementById('lista-alertas');
-            const alertas = gerarAlertas();
-            
-            if (alertas.length === 0) {
-                container.innerHTML = '<div class="empty"><span>✅</span>Sem alertas!</div>';
-                return;
-            }
-            
-            container.innerHTML = alertas.map(a => `
-                <div class="alerta ${a.classe}">
-                    <strong>${a.mensagem}</strong>
-                    ${a.dias !== undefined ? `<br><small>${a.dias} dias</small>` : ''}
-                    ${a.tipo === 'pronta' ? `<button class="btn-alerta" onclick="tornarDisponivel(${a.num})">Tornar Disponível</button>` : ''}
-                    ${a.tipo === 'recuperacao' ? `<button class="btn-alerta" onclick="terminarRecuperacao(${a.num})">Terminar Recuperação</button>` : ''}
-                </div>
-            `).join('');
+            const c = document.getElementById('lista-alertas'), a = gerarAlertas();
+            if (a.length===0) { c.innerHTML='<div class="empty"><span>✅</span>Sem alertas!</div>'; return; }
+            c.innerHTML = a.map(x=>`<div class="alerta ${x.classe}"><strong>${x.mensagem}</strong>${x.dias!==undefined?`<br><small>${x.dias} dias</small>`:''}${x.tipo==='pronta'?`<button class="btn-alerta" onclick="tornarDisponivel(${x.num})">Tornar Disponível</button>`:''}${x.tipo==='recuperacao'?`<button class="btn-alerta" onclick="terminarRecuperacao(${x.num})">Terminar Recuperação</button>`:''}${x.tipo==='atribuir'?`<button class="btn-alerta purple" onclick="abrirModalAtribuirNumero(${x.idLeitao})">Atribuir Número</button>`:''}</div>`).join('');
         }
 
-        // ==================== PORCAS ====================
         function renderizarPorcas() {
-            const container = document.getElementById('lista-porcas');
-            const filtro = document.getElementById('filtro-porcas').value;
-            
-            let porcasFiltradas = dados.porcas;
-            
-            if (filtro !== 'todas') {
-                porcasFiltradas = dados.porcas.filter(p => {
-                    if (filtro === 'Cima' || filtro === 'Cobricao' || filtro === 'Parideiras') {
-                        return p.pocilga === filtro;
-                    }
-                    const estado = p.estado?.tipo || p.estado;
-                    return estado === filtro;
-                });
-            }
-            
-            if (porcasFiltradas.length === 0) {
-                container.innerHTML = '<div class="empty"><span>🐷</span>Nenhuma porca encontrada</div>';
-                return;
-            }
-            
-            container.innerHTML = porcasFiltradas.map(p => {
-                const estadoInfo = getEstadoLabel(p);
-                return `
-                    <div class="card" onclick="abrirModalPorca(${p.num})">
-                        <div class="card-title">Porca #${p.num}</div>
-                        <div class="card-info">
-                            <span class="badge ${estadoInfo.classe}">${estadoInfo.texto}</span>
-                            <br><small>${getPocilgaLabel(p.pocilga)} • ${p.numPartos} partos</small>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            const c = document.getElementById('lista-porcas'), f = document.getElementById('filtro-porcas').value;
+            let ps = dados.porcas;
+            if (f!=='todas') ps = dados.porcas.filter(p => (f==='Cima'||f==='Cobricao'||f==='Parideiras') ? p.pocilga===f : (p.estado?.tipo||p.estado)===f);
+            if (ps.length===0) { c.innerHTML='<div class="empty"><span>🐷</span>Nenhuma porca</div>'; return; }
+            c.innerHTML = ps.map(p => { const e=getEstadoLabel(p); return `<div class="card" onclick="abrirModalPorca(${p.num})"><div class="card-title">Porca #${p.num}</div><div class="card-info"><span class="badge ${e.classe}">${e.texto}</span><br><small>${getPocilgaLabel(p.pocilga)} • ${p.numPartos} partos</small></div></div>`; }).join('');
         }
+        function filtrarPorcas() { renderizarPorcas(); }
 
-        function filtrarPorcas() {
-            renderizarPorcas();
-        }
-
-        function abrirModalNovaPorca() {
-            document.getElementById('nova-porca-num').value = '';
-            document.getElementById('nova-porca-pocilga').value = 'Cima';
-            document.getElementById('nova-porca-data').value = '';
-            document.getElementById('modal-nova-porca').classList.add('active');
-        }
-
+        function abrirModalNovaPorca() { document.getElementById('nova-porca-num').value=''; document.getElementById('nova-porca-pocilga').value='Cima'; document.getElementById('nova-porca-data').value=''; document.getElementById('modal-nova-porca').classList.add('active'); }
         function adicionarPorca() {
-            const num = parseInt(document.getElementById('nova-porca-num').value);
-            const pocilga = document.getElementById('nova-porca-pocilga').value;
-            const dataNasc = document.getElementById('nova-porca-data').value || null;
-            
-            if (!num) {
-                alert('Introduz o número da porca');
-                return;
-            }
-            
-            if (dados.porcas.find(p => p.num === num)) {
-                alert('Já existe uma porca com esse número');
-                return;
-            }
-            
-            const novaPorca = {
-                num: num,
-                pocilga: pocilga,
-                estado: pocilga === 'Cima' ? 'Jovem' : 'Disponivel',
-                numPartos: 0,
-                dataNascimento: dataNasc,
-                ultimoVarrao: null
-            };
-            
-            dados.porcas.push(novaPorca);
-            
-            // Adicionar evento ao histórico
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoAdicionar',
-                descricao: `Porca ${num} adicionada`,
-                numPorca: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-nova-porca');
-                alert('Porca adicionada!');
-            });
+            const n=parseInt(document.getElementById('nova-porca-num').value), p=document.getElementById('nova-porca-pocilga').value, d=document.getElementById('nova-porca-data').value||null;
+            if (!n) { alert('Introduz número'); return; }
+            if (dados.porcas.find(x=>x.num===n)) { alert('Já existe'); return; }
+            dados.porcas.push({num:n,pocilga:p,estado:p==='Cima'?'Jovem':'Disponivel',numPartos:0,dataNascimento:d,ultimoVarrao:null});
+            dados.historico.unshift({data:hoje(),tipo:'EventoAdicionar',descricao:`Porca ${n} adicionada`,numPorca:n});
+            guardarDados().then(()=>{fecharModal('modal-nova-porca');alert('Porca adicionada!');});
         }
 
-        function abrirModalPorca(num) {
-            const porca = dados.porcas.find(p => p.num === num);
-            if (!porca) return;
-            
-            const estadoInfo = getEstadoLabel(porca);
-            const estadoTipo = porca.estado?.tipo || porca.estado;
-            
-            document.getElementById('modal-porca-titulo').textContent = `Porca #${porca.num}`;
-            
-            document.getElementById('modal-porca-info').innerHTML = `
-                <div class="card">
-                    <p><strong>Pocilga:</strong> ${getPocilgaLabel(porca.pocilga)}</p>
-                    <p><strong>Estado:</strong> <span class="badge ${estadoInfo.classe}">${estadoInfo.texto}</span></p>
-                    <p><strong>Partos:</strong> ${porca.numPartos}</p>
-                    ${porca.dataNascimento ? `<p><strong>Nascimento:</strong> ${formatarData(porca.dataNascimento)}</p>` : ''}
-                    ${porca.ultimoVarrao ? `<p><strong>Último varrão:</strong> #${porca.ultimoVarrao}</p>` : ''}
-                </div>
-            `;
-            
-            let acoes = '';
-            
-            if (estadoTipo === 'Jovem') {
-                acoes += `<button class="btn btn-success" onclick="tornarDisponivel(${num})">Tornar Disponível</button>`;
-            }
-            
-            if (estadoTipo === 'Disponivel') {
-                acoes += `<button class="btn btn-warning" onclick="abrirModalCobricao(${num})">Registar Cobrição</button>`;
-            }
-            
-            if (estadoTipo === 'Gravida') {
-                acoes += `<button class="btn btn-primary" onclick="abrirModalParto(${num})">Registar Parto</button>`;
-            }
-            
-            if (estadoTipo === 'Amamentacao') {
-                acoes += `<button class="btn btn-info" onclick="registarDesmame(${num})">Registar Desmame</button>`;
-            }
-            
-            if (estadoTipo === 'Recuperacao') {
-                acoes += `<button class="btn btn-success" onclick="terminarRecuperacao(${num})">Terminar Recuperação</button>`;
-            }
-            
-            acoes += `<button class="btn btn-danger" onclick="removerPorca(${num})">Enviar para Matadouro</button>`;
-            
-            document.getElementById('modal-porca-acoes').innerHTML = acoes;
+        function abrirModalPorca(n) {
+            const p = dados.porcas.find(x=>x.num===n); if(!p)return;
+            const e = getEstadoLabel(p), t = p.estado?.tipo||p.estado;
+            document.getElementById('modal-porca-titulo').textContent=`Porca #${p.num}`;
+            document.getElementById('modal-porca-info').innerHTML=`<div class="card"><p><strong>Pocilga:</strong> ${getPocilgaLabel(p.pocilga)}</p><p><strong>Estado:</strong> <span class="badge ${e.classe}">${e.texto}</span></p><p><strong>Partos:</strong> ${p.numPartos}</p>${p.dataNascimento?`<p><strong>Nasc:</strong> ${formatarData(p.dataNascimento)}</p>`:''}${p.ultimoVarrao?`<p><strong>Último varrão:</strong> #${p.ultimoVarrao}</p>`:''}</div>`;
+            let a = '';
+            if (t==='Jovem') a+=`<button class="btn btn-success" onclick="tornarDisponivel(${n})">Tornar Disponível</button>`;
+            if (t==='Disponivel') a+=`<button class="btn btn-warning" onclick="abrirModalCobricao(${n})">Registar Cobrição</button>`;
+            if (t==='Gravida') a+=`<button class="btn btn-primary" onclick="abrirModalParto(${n})">Registar Parto</button>`;
+            if (t==='Amamentacao') a+=`<button class="btn btn-info" onclick="abrirModalDesmame(${n})">Registar Desmame</button>`;
+            if (t==='Recuperacao') a+=`<button class="btn btn-success" onclick="terminarRecuperacao(${n})">Terminar Recuperação</button>`;
+            a+=`<button class="btn btn-danger" onclick="removerPorca(${n})">Enviar Matadouro</button>`;
+            document.getElementById('modal-porca-acoes').innerHTML=a;
             document.getElementById('modal-porca').classList.add('active');
         }
 
-        function tornarDisponivel(num) {
-            const idx = dados.porcas.findIndex(p => p.num === num);
-            if (idx === -1) return;
-            
-            dados.porcas[idx].estado = 'Disponivel';
-            dados.porcas[idx].pocilga = 'Cobricao';
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoDisponivel',
-                descricao: `Porca ${num} disponível para reprodução`,
-                numPorca: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-porca');
-                alert('Porca agora disponível!');
-            });
-        }
+        function tornarDisponivel(n) { const i=dados.porcas.findIndex(x=>x.num===n); if(i===-1)return; dados.porcas[i].estado='Disponivel'; dados.porcas[i].pocilga='Cobricao'; dados.historico.unshift({data:hoje(),tipo:'EventoDisponivel',descricao:`Porca ${n} disponível`,numPorca:n}); guardarDados().then(()=>{fecharModal('modal-porca');alert('Disponível!');}); }
+        function terminarRecuperacao(n) { const i=dados.porcas.findIndex(x=>x.num===n); if(i===-1)return; dados.porcas[i].estado='Disponivel'; dados.porcas[i].pocilga='Cobricao'; dados.historico.unshift({data:hoje(),tipo:'EventoRecuperacao',descricao:`Porca ${n} recuperada`,numPorca:n}); guardarDados().then(()=>{fecharModal('modal-porca');alert('Recuperada!');}); }
+        function removerPorca(n) { if(!confirm(`Enviar Porca ${n} para matadouro?`))return; dados.porcas=dados.porcas.filter(x=>x.num!==n); dados.historico.unshift({data:hoje(),tipo:'EventoMatadouro',descricao:`Porca ${n} para matadouro`,numPorca:n}); guardarDados().then(()=>{fecharModal('modal-porca');alert('Removida.');}); }
 
-        function terminarRecuperacao(num) {
-            const idx = dados.porcas.findIndex(p => p.num === num);
-            if (idx === -1) return;
-            
-            dados.porcas[idx].estado = 'Disponivel';
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoRecuperacao',
-                descricao: `Porca ${num} recuperada - disponível`,
-                numPorca: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-porca');
-                alert('Porca recuperada!');
-            });
+        function abrirModalCobricao(n) {
+            document.getElementById('cobricao-porca-num').value=n;
+            const vs = dados.varroes.filter(v=>v.estado!=='Jovem');
+            document.getElementById('cobricao-varrao').innerHTML=vs.map(v=>`<option value="${v.numVarrao}">Varrão #${v.numVarrao}</option>`).join('');
+            if (vs.length===0) { alert('Sem varrões disponíveis!'); return; }
+            fecharModal('modal-porca'); document.getElementById('modal-cobricao').classList.add('active');
         }
-
-        // ==================== COBRIÇÃO ====================
-        function abrirModalCobricao(num) {
-            document.getElementById('cobricao-porca-num').value = num;
-            
-            const select = document.getElementById('cobricao-varrao');
-            select.innerHTML = dados.varroes.map(v => 
-                `<option value="${v.numVarrao}">Varrão #${v.numVarrao}</option>`
-            ).join('');
-            
-            if (dados.varroes.length === 0) {
-                alert('Adiciona primeiro um varrão!');
-                return;
-            }
-            
-            fecharModal('modal-porca');
-            document.getElementById('modal-cobricao').classList.add('active');
-        }
-
         function registarCobricao() {
-            const numPorca = parseInt(document.getElementById('cobricao-porca-num').value);
-            const numVarrao = parseInt(document.getElementById('cobricao-varrao').value);
-            
-            const idx = dados.porcas.findIndex(p => p.num === numPorca);
-            if (idx === -1) return;
-            
-            const dataParto = adicionarDias(hoje(), 114); // 3 meses, 3 semanas, 3 dias
-            
-            dados.porcas[idx].estado = {
-                tipo: 'Gravida',
-                dataParto: dataParto,
-                varrao: numVarrao
-            };
-            dados.porcas[idx].ultimoVarrao = numVarrao;
-            dados.porcas[idx].pocilga = 'Cobricao';
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoCobricao',
-                descricao: `Porca ${numPorca} coberta por Varrão ${numVarrao}`,
-                numPorca: numPorca,
-                numVarrao: numVarrao
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-cobricao');
-                alert(`Cobrição registada! Parto previsto: ${formatarData(dataParto)}`);
-            });
+            const np=parseInt(document.getElementById('cobricao-porca-num').value), nv=parseInt(document.getElementById('cobricao-varrao').value);
+            const i=dados.porcas.findIndex(x=>x.num===np); if(i===-1)return;
+            const dp = adicionarDias(hoje(),114);
+            dados.porcas[i].estado={tipo:'Gravida',dataParto:dp,varrao:nv}; dados.porcas[i].ultimoVarrao=nv; dados.porcas[i].pocilga='Cobricao';
+            dados.historico.unshift({data:hoje(),tipo:'EventoCobricao',descricao:`Porca ${np} coberta por Varrão ${nv}`,numPorca:np,numVarrao:nv});
+            guardarDados().then(()=>{fecharModal('modal-cobricao');alert(`Cobrição! Parto: ${formatarData(dp)}`);});
         }
 
-        // ==================== PARTO ====================
-        function abrirModalParto(num) {
-            document.getElementById('parto-porca-num').value = num;
-            document.getElementById('parto-vender').value = 0;
-            document.getElementById('parto-ficar-container').innerHTML = '';
-            atualizarResumoParto();
-            
-            fecharModal('modal-porca');
-            document.getElementById('modal-parto').classList.add('active');
-        }
-
-        function adicionarLeitaoFicar() {
-            const container = document.getElementById('parto-ficar-container');
-            const idx = container.children.length;
-            
-            const div = document.createElement('div');
-            div.className = 'form-group';
-            div.innerHTML = `
-                <label>Leitão ${idx + 1}</label>
-                <select class="leitao-genero">
-                    <option value="Macho">♂ Macho</option>
-                    <option value="Femea">♀ Fêmea</option>
-                </select>
-            `;
-            container.appendChild(div);
-            atualizarResumoParto();
-        }
-
-        function atualizarResumoParto() {
-            const vender = parseInt(document.getElementById('parto-vender').value) || 0;
-            const ficar = document.getElementById('parto-ficar-container').children.length;
-            const total = vender + ficar;
-            
-            document.getElementById('resumo-parto').innerHTML = `
-                <div class="linha"><span>Para vender:</span><span>${vender}</span></div>
-                <div class="linha"><span>Para ficar:</span><span>${ficar}</span></div>
-                <div class="linha total"><span>Total:</span><span>${total}</span></div>
-            `;
-        }
-
-        document.getElementById('parto-vender').addEventListener('input', atualizarResumoParto);
-
+        function abrirModalParto(n) { document.getElementById('parto-porca-num').value=n; document.getElementById('parto-vender-container').innerHTML=''; document.getElementById('parto-ficar-container').innerHTML=''; atualizarResumoParto(); fecharModal('modal-porca'); document.getElementById('modal-parto').classList.add('active'); }
+        function adicionarLeitaoVender() { const c=document.getElementById('parto-vender-container'),i=c.children.length; const d=document.createElement('div'); d.className='leitao-item'; d.innerHTML=`<span>🏷️ #${i+1}</span><select class="leitao-vender-genero"><option value="Macho">♂</option><option value="Femea">♀</option></select><button type="button" onclick="this.parentElement.remove();atualizarResumoParto();" style="background:#dc3545;color:white;border:none;padding:5px 10px;border-radius:5px;">✕</button>`; c.appendChild(d); atualizarResumoParto(); }
+        function adicionarLeitaoFicar() { const c=document.getElementById('parto-ficar-container'),i=c.children.length; const d=document.createElement('div'); d.className='leitao-item'; d.innerHTML=`<span>🏠 #${i+1}</span><select class="leitao-ficar-genero"><option value="Macho">♂</option><option value="Femea">♀</option></select><button type="button" onclick="this.parentElement.remove();atualizarResumoParto();" style="background:#dc3545;color:white;border:none;padding:5px 10px;border-radius:5px;">✕</button>`; c.appendChild(d); atualizarResumoParto(); }
+        function atualizarResumoParto() { const v=document.querySelectorAll('.leitao-vender-genero').length, f=document.querySelectorAll('.leitao-ficar-genero').length; document.getElementById('resumo-parto').innerHTML=`<div class="linha"><span>Vender:</span><span>${v}</span></div><div class="linha"><span>Ficar:</span><span>${f}</span></div><div class="linha total"><span>Total:</span><span>${v+f}</span></div>`; }
         function registarParto() {
-            const numPorca = parseInt(document.getElementById('parto-porca-num').value);
-            const vender = parseInt(document.getElementById('parto-vender').value) || 0;
-            
-            const generos = [];
-            document.querySelectorAll('.leitao-genero').forEach(sel => {
-                generos.push(sel.value);
-            });
-            
-            const idx = dados.porcas.findIndex(p => p.num === numPorca);
-            if (idx === -1) return;
-            
-            const porca = dados.porcas[idx];
-            const paiId = porca.ultimoVarrao;
-            const dataDesmame = adicionarDias(hoje(), 28); // 4 semanas
-            
-            // Atualizar porca
-            dados.porcas[idx].estado = {
-                tipo: 'Amamentacao',
-                dataDesmame: dataDesmame
-            };
-            dados.porcas[idx].numPartos += 1;
-            dados.porcas[idx].pocilga = 'Parideiras';
-            
-            // Criar leitões para vender
-            for (let i = 0; i < vender; i++) {
-                dados.leitoes.push({
-                    idLeitao: dados.proximoIdLeitao++,
-                    maeId: numPorca,
-                    paiId: paiId,
-                    genero: 'Macho', // Default
-                    destino: 'Vender',
-                    dataLeitaoNasc: hoje()
-                });
+            const np=parseInt(document.getElementById('parto-porca-num').value), gv=[], gf=[];
+            document.querySelectorAll('.leitao-vender-genero').forEach(s=>gv.push(s.value));
+            document.querySelectorAll('.leitao-ficar-genero').forEach(s=>gf.push(s.value));
+            if (gv.length===0&&gf.length===0) { alert('Adiciona leitões!'); return; }
+            const i=dados.porcas.findIndex(x=>x.num===np); if(i===-1)return;
+            const p=dados.porcas[i], pai=p.ultimoVarrao, dd=adicionarDias(hoje(),28);
+            dados.porcas[i].estado={tipo:'Amamentacao',dataDesmame:dd}; dados.porcas[i].numPartos+=1; dados.porcas[i].pocilga='Parideiras';
+            gv.forEach(g=>dados.leitoes.push({idLeitao:dados.proximoIdLeitao++,maeId:np,paiId:pai,genero:g,destino:'Vender',dataLeitaoNasc:hoje()}));
+            gf.forEach(g=>dados.leitoes.push({idLeitao:dados.proximoIdLeitao++,maeId:np,paiId:pai,genero:g,destino:'Ficar',dataLeitaoNasc:hoje(),numeroAtribuido:false}));
+            dados.historico.unshift({data:hoje(),tipo:'EventoParto',descricao:`Porca ${np} pariu ${gv.length+gf.length} leitões`,numPorca:np,numVarrao:pai});
+            guardarDados().then(()=>{fecharModal('modal-parto');alert(`Parto! Desmame: ${formatarData(dd)}`);});
+        }
+
+        function abrirModalDesmame(n) {
+            document.getElementById('desmame-porca-num').value=n;
+            const lf = dados.leitoes.filter(l=>l.maeId===n&&l.destino==='Ficar');
+            const c = document.getElementById('desmame-leitoes-container');
+            c.innerHTML = lf.length===0 ? '<p style="color:#666;">Sem leitões para ficar.</p>' : lf.map(l=>`<div class="leitao-item"><span>${l.genero==='Macho'?'♂':'♀'} #${l.idLeitao}</span><span>→ ${l.genero==='Femea'?'Porca':'Varrão'} nº:</span><input type="number" class="desmame-numero" data-id="${l.idLeitao}" data-genero="${l.genero}" style="width:70px;"></div>`).join('');
+            fecharModal('modal-porca'); document.getElementById('modal-desmame').classList.add('active');
+        }
+        function confirmarDesmame() {
+            const np=parseInt(document.getElementById('desmame-porca-num').value), novos=[];
+            for (const inp of document.querySelectorAll('.desmame-numero')) {
+                const num=parseInt(inp.value), id=parseInt(inp.dataset.id), g=inp.dataset.genero;
+                if (!num) { alert(`Número para leitão #${id}!`); return; }
+                if (g==='Femea' && dados.porcas.find(p=>p.num===num)) { alert(`Porca ${num} já existe!`); return; }
+                if (g==='Macho' && dados.varroes.find(v=>v.numVarrao===num)) { alert(`Varrão ${num} já existe!`); return; }
+                novos.push({id,num,g});
             }
-            
-            // Criar leitões para ficar
-            generos.forEach(g => {
-                dados.leitoes.push({
-                    idLeitao: dados.proximoIdLeitao++,
-                    maeId: numPorca,
-                    paiId: paiId,
-                    genero: g,
-                    destino: 'Ficar',
-                    dataLeitaoNasc: hoje()
-                });
+            const i=dados.porcas.findIndex(x=>x.num===np); if(i===-1)return;
+            dados.porcas[i].estado={tipo:'Recuperacao',dataFim:adicionarDias(hoje(),8)}; dados.porcas[i].pocilga='Cobricao';
+            novos.forEach(({id,num,g})=>{
+                const l=dados.leitoes.find(x=>x.idLeitao===id);
+                if(g==='Femea') dados.porcas.push({num,pocilga:'Cima',estado:'Jovem',numPartos:0,dataNascimento:l?.dataLeitaoNasc||hoje(),ultimoVarrao:null});
+                else dados.varroes.push({numVarrao:num,estado:'Jovem',dataNascVarrao:l?.dataLeitaoNasc||hoje()});
             });
-            
-            const totalLeitoes = vender + generos.length;
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoParto',
-                descricao: `Porca ${numPorca} pariu ${totalLeitoes} leitões`,
-                numPorca: numPorca,
-                numVarrao: paiId
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-parto');
-                alert(`Parto registado! ${totalLeitoes} leitões. Desmame previsto: ${formatarData(dataDesmame)}`);
-            });
+            dados.leitoes=dados.leitoes.filter(l=>l.maeId!==np);
+            dados.historico.unshift({data:hoje(),tipo:'EventoDesmame',descricao:`Porca ${np} desmamada - ${novos.length} promovidos`,numPorca:np});
+            guardarDados().then(()=>{fecharModal('modal-desmame');alert(`Desmame! ${novos.length} novos animais.`);});
         }
 
-        // ==================== DESMAME ====================
-        function registarDesmame(num) {
-            if (!confirm(`Registar desmame da Porca ${num}?`)) return;
-            
-            const idx = dados.porcas.findIndex(p => p.num === num);
-            if (idx === -1) return;
-            
-            const dataFimRecup = adicionarDias(hoje(), 8);
-            
-            dados.porcas[idx].estado = {
-                tipo: 'Recuperacao',
-                dataFim: dataFimRecup
-            };
-            
-            // Remover leitões desta porca
-            dados.leitoes = dados.leitoes.filter(l => l.maeId !== num);
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoDesmame',
-                descricao: `Porca ${num} desmamada - em recuperação 8 dias`,
-                numPorca: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-porca');
-                alert('Desmame registado!');
-            });
-        }
-
-        // ==================== REMOVER PORCA ====================
-        function removerPorca(num) {
-            if (!confirm(`Enviar Porca ${num} para o matadouro?`)) return;
-            
-            dados.porcas = dados.porcas.filter(p => p.num !== num);
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoMatadouro',
-                descricao: `Porca ${num} enviada para matadouro`,
-                numPorca: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-porca');
-                alert('Porca removida.');
-            });
-        }
-
-        // ==================== VARRÕES ====================
         function renderizarVarroes() {
-            const container = document.getElementById('lista-varroes');
-            
-            if (dados.varroes.length === 0) {
-                container.innerHTML = '<div class="empty"><span>🐗</span>Nenhum varrão</div>';
-                return;
-            }
-            
-            container.innerHTML = dados.varroes.map(v => `
-                <div class="card">
-                    <div class="card-title">Varrão #${v.numVarrao}</div>
-                    <div class="card-info">
-                        ${v.dataNascVarrao ? `Nascimento: ${formatarData(v.dataNascVarrao)}` : ''}
-                    </div>
-                    <button class="btn btn-danger" onclick="removerVarrao(${v.numVarrao})" style="margin-top:10px;">Remover</button>
-                </div>
-            `).join('');
+            const c = document.getElementById('lista-varroes');
+            if (dados.varroes.length===0) { c.innerHTML='<div class="empty"><span>🐗</span>Nenhum varrão</div>'; return; }
+            c.innerHTML = dados.varroes.map(v=>{ const e=getEstadoVarraoLabel(v); return `<div class="card" onclick="abrirModalVarrao(${v.numVarrao})"><div class="card-title">Varrão #${v.numVarrao}</div><div class="card-info"><span class="badge ${e.classe}">${e.texto}</span>${v.dataNascVarrao?`<br><small>Nasc: ${formatarData(v.dataNascVarrao)}</small>`:''}</div></div>`; }).join('');
         }
-
-        function abrirModalNovoVarrao() {
-            document.getElementById('novo-varrao-num').value = '';
-            document.getElementById('novo-varrao-data').value = '';
-            document.getElementById('modal-novo-varrao').classList.add('active');
-        }
-
+        function abrirModalNovoVarrao() { document.getElementById('novo-varrao-num').value=''; document.getElementById('novo-varrao-estado').value='Jovem'; document.getElementById('novo-varrao-data').value=''; document.getElementById('modal-novo-varrao').classList.add('active'); }
         function adicionarVarrao() {
-            const num = parseInt(document.getElementById('novo-varrao-num').value);
-            const dataNasc = document.getElementById('novo-varrao-data').value || null;
-            
-            if (!num) {
-                alert('Introduz o número do varrão');
-                return;
-            }
-            
-            if (dados.varroes.find(v => v.numVarrao === num)) {
-                alert('Já existe um varrão com esse número');
-                return;
-            }
-            
-            dados.varroes.push({
-                numVarrao: num,
-                dataNascVarrao: dataNasc
-            });
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoAdicionar',
-                descricao: `Varrão ${num} adicionado`,
-                numVarrao: num
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-novo-varrao');
-                alert('Varrão adicionado!');
-            });
+            const n=parseInt(document.getElementById('novo-varrao-num').value), e=document.getElementById('novo-varrao-estado').value, d=document.getElementById('novo-varrao-data').value||null;
+            if (!n) { alert('Introduz número'); return; }
+            if (dados.varroes.find(x=>x.numVarrao===n)) { alert('Já existe'); return; }
+            dados.varroes.push({numVarrao:n,estado:e,dataNascVarrao:d});
+            dados.historico.unshift({data:hoje(),tipo:'EventoAdicionar',descricao:`Varrão ${n} adicionado (${e})`,numVarrao:n});
+            guardarDados().then(()=>{fecharModal('modal-novo-varrao');alert('Varrão adicionado!');});
         }
-
-        function removerVarrao(num) {
-            if (!confirm(`Remover Varrão ${num}?`)) return;
-            
-            dados.varroes = dados.varroes.filter(v => v.numVarrao !== num);
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoMatadouro',
-                descricao: `Varrão ${num} removido`,
-                numVarrao: num
-            });
-            
-            guardarDados().then(() => {
-                alert('Varrão removido.');
-            });
+        function abrirModalVarrao(n) {
+            const v=dados.varroes.find(x=>x.numVarrao===n); if(!v)return;
+            const e=getEstadoVarraoLabel(v);
+            document.getElementById('modal-varrao-titulo').textContent=`Varrão #${v.numVarrao}`;
+            document.getElementById('modal-varrao-info').innerHTML=`<div class="card"><p><strong>Estado:</strong> <span class="badge ${e.classe}">${e.texto}</span></p>${v.dataNascVarrao?`<p><strong>Nasc:</strong> ${formatarData(v.dataNascVarrao)}</p>`:''}</div>`;
+            let a = v.estado==='Jovem' ? `<button class="btn btn-success" onclick="tornarVarraoDisponivel(${n})">Tornar Disponível</button>` : '';
+            a+=`<button class="btn btn-danger" onclick="removerVarrao(${n})">Remover</button>`;
+            document.getElementById('modal-varrao-acoes').innerHTML=a;
+            document.getElementById('modal-varrao').classList.add('active');
         }
+        function tornarVarraoDisponivel(n) { const i=dados.varroes.findIndex(x=>x.numVarrao===n); if(i===-1)return; dados.varroes[i].estado='Disponivel'; dados.historico.unshift({data:hoje(),tipo:'EventoDisponivel',descricao:`Varrão ${n} disponível`,numVarrao:n}); guardarDados().then(()=>{fecharModal('modal-varrao');alert('Disponível!');}); }
+        function removerVarrao(n) { if(!confirm(`Remover Varrão ${n}?`))return; dados.varroes=dados.varroes.filter(x=>x.numVarrao!==n); dados.historico.unshift({data:hoje(),tipo:'EventoMatadouro',descricao:`Varrão ${n} removido`,numVarrao:n}); guardarDados().then(()=>{fecharModal('modal-varrao');alert('Removido.');}); }
 
-        // ==================== LEITÕES ====================
         function renderizarLeitoes() {
-            const container = document.getElementById('lista-leitoes');
-            
-            if (dados.leitoes.length === 0) {
-                container.innerHTML = '<div class="empty"><span>🐽</span>Nenhum leitão</div>';
-                document.getElementById('btn-vender-leitoes').style.display = 'none';
-                return;
-            }
-            
-            container.innerHTML = dados.leitoes.map(l => `
-                <div class="leitao-card">
-                    <span class="leitao-genero">${l.genero === 'Macho' ? '♂' : '♀'}</span>
-                    <div class="leitao-info">
-                        <strong>Leitão #${l.idLeitao}</strong>
-                        <br><small>Mãe: Porca ${l.maeId} • ${l.destino === 'Vender' ? '💰 Vender' : '🏠 Ficar'}</small>
-                        <br><small>Nasc: ${formatarData(l.dataLeitaoNasc)}</small>
-                    </div>
-                    <input type="checkbox" class="leitao-checkbox" value="${l.idLeitao}" onchange="toggleLeitaoSelecionado(${l.idLeitao})">
-                </div>
-            `).join('');
-            
+            const c = document.getElementById('lista-leitoes');
+            if (dados.leitoes.length===0) { c.innerHTML='<div class="empty"><span>🐽</span>Nenhum leitão</div>'; document.getElementById('btn-vender-leitoes').style.display='none'; return; }
+            c.innerHTML = dados.leitoes.map(l=>{ const sn=l.destino==='Ficar'&&!l.numeroAtribuido; return `<div class="leitao-card ${sn?'sem-numero':''}"><span class="leitao-genero">${l.genero==='Macho'?'♂':'♀'}</span><div class="leitao-info"><strong>Leitão #${l.idLeitao}</strong>${sn?'<span class="badge badge-sem-numero">Sem nº</span>':''}<br><small>Mãe: ${l.maeId} • ${l.destino==='Vender'?'💰 Vender':'🏠 Ficar'}</small><br><small>Nasc: ${formatarData(l.dataLeitaoNasc)}</small></div>${l.destino==='Vender'?`<input type="checkbox" class="leitao-checkbox" value="${l.idLeitao}" onchange="toggleLeitaoSelecionado(${l.idLeitao})">`:''}${sn?`<button class="btn-alerta purple" onclick="abrirModalAtribuirNumero(${l.idLeitao})" style="margin:0;padding:8px;">Atribuir</button>`:''}</div>`; }).join('');
             atualizarBotaoVender();
         }
+        function toggleLeitaoSelecionado(id) { const i=leitoesSelecionados.indexOf(id); if(i===-1)leitoesSelecionados.push(id); else leitoesSelecionados.splice(i,1); atualizarBotaoVender(); }
+        function atualizarBotaoVender() { const b=document.getElementById('btn-vender-leitoes'); b.style.display=leitoesSelecionados.length>0?'block':'none'; b.textContent=`💰 Vender ${leitoesSelecionados.length}`; }
+        function abrirModalVenderLeitoes() { document.getElementById('vender-leitoes-info').textContent=`Vender ${leitoesSelecionados.length} leitão(ões)?`; document.getElementById('vender-leitoes-valor').value=''; document.getElementById('modal-vender-leitoes').classList.add('active'); }
+        function confirmarVendaLeitoes() { const v=parseFloat(document.getElementById('vender-leitoes-valor').value)||0; dados.leitoes=dados.leitoes.filter(l=>!leitoesSelecionados.includes(l.idLeitao)); dados.historico.unshift({data:hoje(),tipo:'EventoVenda',descricao:`Vendidos ${leitoesSelecionados.length} leitões por €${v.toFixed(2)}`,valor:v}); leitoesSelecionados=[]; guardarDados().then(()=>{fecharModal('modal-vender-leitoes');alert(`Venda: €${v.toFixed(2)}`);}); }
 
-        function toggleLeitaoSelecionado(id) {
-            const idx = leitoesSelecionados.indexOf(id);
-            if (idx === -1) {
-                leitoesSelecionados.push(id);
-            } else {
-                leitoesSelecionados.splice(idx, 1);
-            }
-            atualizarBotaoVender();
+        function abrirModalAtribuirNumero(id) {
+            const l=dados.leitoes.find(x=>x.idLeitao===id); if(!l)return;
+            document.getElementById('atribuir-leitao-id').value=id;
+            document.getElementById('atribuir-leitao-info').innerHTML=`<p>${l.genero==='Macho'?'♂ Macho':'♀ Fêmea'} - Leitão #${id}</p><p>Será: <strong>${l.genero==='Femea'?'Porca Jovem':'Varrão Jovem'}</strong></p>`;
+            document.getElementById('atribuir-numero').value='';
+            document.getElementById('modal-atribuir-numero').classList.add('active');
+        }
+        function confirmarAtribuirNumero() {
+            const id=parseInt(document.getElementById('atribuir-leitao-id').value), num=parseInt(document.getElementById('atribuir-numero').value);
+            if (!num) { alert('Introduz número!'); return; }
+            const l=dados.leitoes.find(x=>x.idLeitao===id); if(!l)return;
+            if (l.genero==='Femea') { if(dados.porcas.find(p=>p.num===num)){alert(`Porca ${num} já existe!`);return;} dados.porcas.push({num,pocilga:'Cima',estado:'Jovem',numPartos:0,dataNascimento:l.dataLeitaoNasc,ultimoVarrao:null}); }
+            else { if(dados.varroes.find(v=>v.numVarrao===num)){alert(`Varrão ${num} já existe!`);return;} dados.varroes.push({numVarrao:num,estado:'Jovem',dataNascVarrao:l.dataLeitaoNasc}); }
+            dados.leitoes=dados.leitoes.filter(x=>x.idLeitao!==id);
+            dados.historico.unshift({data:hoje(),tipo:'EventoNovoNumero',descricao:`Leitão #${id} → ${l.genero==='Femea'?'Porca':'Varrão'} #${num}`});
+            guardarDados().then(()=>{fecharModal('modal-atribuir-numero');alert(`${l.genero==='Femea'?'Porca':'Varrão'} #${num} criado!`);});
         }
 
-        function atualizarBotaoVender() {
-            const btn = document.getElementById('btn-vender-leitoes');
-            btn.style.display = leitoesSelecionados.length > 0 ? 'block' : 'none';
-            btn.textContent = `💰 Vender ${leitoesSelecionados.length} Selecionado(s)`;
-        }
-
-        function abrirModalVenderLeitoes() {
-            document.getElementById('vender-leitoes-info').textContent = 
-                `Vender ${leitoesSelecionados.length} leitão(ões)?`;
-            document.getElementById('vender-leitoes-valor').value = '';
-            document.getElementById('modal-vender-leitoes').classList.add('active');
-        }
-
-        function confirmarVendaLeitoes() {
-            const valor = parseFloat(document.getElementById('vender-leitoes-valor').value) || 0;
-            
-            // Remover leitões vendidos
-            dados.leitoes = dados.leitoes.filter(l => !leitoesSelecionados.includes(l.idLeitao));
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoVenda',
-                descricao: `Vendidos ${leitoesSelecionados.length} leitões por €${valor.toFixed(2)}`,
-                valor: valor
-            });
-            
-            leitoesSelecionados = [];
-            
-            guardarDados().then(() => {
-                fecharModal('modal-vender-leitoes');
-                alert(`Venda registada: €${valor.toFixed(2)}`);
-            });
-        }
-
-        // ==================== DESPESAS ====================
         function renderizarDespesas() {
-            const container = document.getElementById('lista-despesas');
-            
-            // Calcular totais
-            const receitas = dados.historico
-                .filter(e => e.tipo === 'EventoVenda' && e.valor)
-                .reduce((sum, e) => sum + e.valor, 0);
-            
-            const despesasTotal = dados.despesas.reduce((sum, d) => sum + d.valorDespesa, 0);
-            const lucro = receitas - despesasTotal;
-            
-            document.getElementById('total-receitas').textContent = `€${receitas.toFixed(2)}`;
-            document.getElementById('total-despesas').textContent = `€${despesasTotal.toFixed(2)}`;
-            document.getElementById('total-lucro').textContent = `€${lucro.toFixed(2)}`;
-            
-            const cardLucro = document.getElementById('card-lucro');
-            if (lucro < 0) {
-                cardLucro.classList.add('negativo');
-            } else {
-                cardLucro.classList.remove('negativo');
-            }
-            
-            if (dados.despesas.length === 0) {
-                container.innerHTML = '<div class="empty"><span>💰</span>Nenhuma despesa registada</div>';
-                return;
-            }
-            
-            const despesasOrdenadas = [...dados.despesas].sort((a, b) => 
-                new Date(b.dataDespesa) - new Date(a.dataDespesa)
-            );
-            
-            container.innerHTML = despesasOrdenadas.slice(0, 10).map(d => `
-                <div class="despesa-card">
-                    <div class="valor">€${d.valorDespesa.toFixed(2)}</div>
-                    <div><span class="categoria">${d.categoriaDespesa}</span></div>
-                    <div>${d.descricaoDespesa}</div>
-                    <div class="data">${formatarData(d.dataDespesa)}</div>
-                </div>
-            `).join('');
+            const c=document.getElementById('lista-despesas'), r=dados.historico.filter(e=>e.tipo==='EventoVenda'&&e.valor).reduce((s,e)=>s+e.valor,0), d=dados.despesas.reduce((s,x)=>s+x.valorDespesa,0), l=r-d;
+            document.getElementById('total-receitas').textContent=`€${r.toFixed(2)}`;
+            document.getElementById('total-despesas').textContent=`€${d.toFixed(2)}`;
+            document.getElementById('total-lucro').textContent=`€${l.toFixed(2)}`;
+            document.getElementById('card-lucro').classList.toggle('negativo',l<0);
+            if (dados.despesas.length===0) { c.innerHTML='<div class="empty"><span>💰</span>Nenhuma despesa</div>'; return; }
+            c.innerHTML = [...dados.despesas].sort((a,b)=>new Date(b.dataDespesa)-new Date(a.dataDespesa)).slice(0,10).map(x=>`<div class="despesa-card"><div class="valor">€${x.valorDespesa.toFixed(2)}</div><div><span class="categoria">${x.categoriaDespesa}</span></div><div>${x.descricaoDespesa}</div><div class="data">${formatarData(x.dataDespesa)}</div></div>`).join('');
         }
-
-        function abrirModalNovaDespesa() {
-            document.getElementById('despesa-categoria').value = 'Alimentacao';
-            document.getElementById('despesa-descricao').value = '';
-            document.getElementById('despesa-valor').value = '';
-            document.getElementById('modal-nova-despesa').classList.add('active');
-        }
-
+        function abrirModalNovaDespesa() { document.getElementById('despesa-categoria').value='Alimentacao'; document.getElementById('despesa-descricao').value=''; document.getElementById('despesa-valor').value=''; document.getElementById('modal-nova-despesa').classList.add('active'); }
         function adicionarDespesa() {
-            const categoria = document.getElementById('despesa-categoria').value;
-            const descricao = document.getElementById('despesa-descricao').value;
-            const valor = parseFloat(document.getElementById('despesa-valor').value);
-            
-            if (!descricao || !valor) {
-                alert('Preenche todos os campos');
-                return;
-            }
-            
-            dados.despesas.push({
-                idDespesa: dados.proximoIdDespesa++,
-                dataDespesa: hoje(),
-                categoriaDespesa: categoria,
-                descricaoDespesa: descricao,
-                valorDespesa: valor
-            });
-            
-            dados.historico.unshift({
-                data: hoje(),
-                tipo: 'EventoDespesa',
-                descricao: `Despesa: ${descricao} - €${valor.toFixed(2)}`
-            });
-            
-            guardarDados().then(() => {
-                fecharModal('modal-nova-despesa');
-                alert('Despesa adicionada!');
-            });
+            const cat=document.getElementById('despesa-categoria').value, desc=document.getElementById('despesa-descricao').value, val=parseFloat(document.getElementById('despesa-valor').value);
+            if (!desc||!val) { alert('Preenche tudo'); return; }
+            dados.despesas.push({idDespesa:dados.proximoIdDespesa++,dataDespesa:hoje(),categoriaDespesa:cat,descricaoDespesa:desc,valorDespesa:val});
+            dados.historico.unshift({data:hoje(),tipo:'EventoDespesa',descricao:`Despesa: ${desc} - €${val.toFixed(2)}`});
+            guardarDados().then(()=>{fecharModal('modal-nova-despesa');alert('Despesa adicionada!');});
         }
 
-        // ==================== ESTATÍSTICAS ====================
         function renderizarStats() {
-            document.getElementById('stat-total-porcas').textContent = dados.porcas.length;
-            document.getElementById('stat-total-varroes').textContent = dados.varroes.length;
-            document.getElementById('stat-total-leitoes').textContent = dados.leitoes.length;
-            
-            // Contar estados
-            const estados = { Jovem: 0, Disponivel: 0, Gravida: 0, Amamentacao: 0, Recuperacao: 0 };
-            dados.porcas.forEach(p => {
-                const estado = p.estado?.tipo || p.estado;
-                if (estados[estado] !== undefined) {
-                    estados[estado]++;
-                }
-            });
-            
-            const total = dados.porcas.length || 1;
-            const barras = document.getElementById('barras-estados');
-            
-            barras.innerHTML = `
-                <div class="barra-container">
-                    <div class="barra-label"><span>Disponíveis</span><span>${estados.Disponivel}</span></div>
-                    <div class="barra-fundo"><div class="barra-valor barra-verde" style="width: ${(estados.Disponivel/total)*100}%"></div></div>
-                </div>
-                <div class="barra-container">
-                    <div class="barra-label"><span>Grávidas</span><span>${estados.Gravida}</span></div>
-                    <div class="barra-fundo"><div class="barra-valor barra-amarela" style="width: ${(estados.Gravida/total)*100}%"></div></div>
-                </div>
-                <div class="barra-container">
-                    <div class="barra-label"><span>Amamentação</span><span>${estados.Amamentacao}</span></div>
-                    <div class="barra-fundo"><div class="barra-valor barra-rosa" style="width: ${(estados.Amamentacao/total)*100}%"></div></div>
-                </div>
-                <div class="barra-container">
-                    <div class="barra-label"><span>Recuperação</span><span>${estados.Recuperacao}</span></div>
-                    <div class="barra-fundo"><div class="barra-valor barra-azul" style="width: ${(estados.Recuperacao/total)*100}%"></div></div>
-                </div>
-                <div class="barra-container">
-                    <div class="barra-label"><span>Jovens</span><span>${estados.Jovem}</span></div>
-                    <div class="barra-fundo"><div class="barra-valor barra-cinza" style="width: ${(estados.Jovem/total)*100}%"></div></div>
-                </div>
-            `;
+            document.getElementById('stat-total-porcas').textContent=dados.porcas.length;
+            document.getElementById('stat-total-varroes').textContent=dados.varroes.length;
+            document.getElementById('stat-total-leitoes').textContent=dados.leitoes.length;
+            const e={Jovem:0,Disponivel:0,Gravida:0,Amamentacao:0,Recuperacao:0};
+            dados.porcas.forEach(p=>{const t=p.estado?.tipo||p.estado;if(e[t]!==undefined)e[t]++;});
+            const tot=dados.porcas.length||1;
+            document.getElementById('barras-estados').innerHTML=`
+                <div class="barra-container"><div class="barra-label"><span>Disponíveis</span><span>${e.Disponivel}</span></div><div class="barra-fundo"><div class="barra-valor barra-verde" style="width:${(e.Disponivel/tot)*100}%"></div></div></div>
+                <div class="barra-container"><div class="barra-label"><span>Grávidas</span><span>${e.Gravida}</span></div><div class="barra-fundo"><div class="barra-valor barra-amarela" style="width:${(e.Gravida/tot)*100}%"></div></div></div>
+                <div class="barra-container"><div class="barra-label"><span>Amamentação</span><span>${e.Amamentacao}</span></div><div class="barra-fundo"><div class="barra-valor barra-rosa" style="width:${(e.Amamentacao/tot)*100}%"></div></div></div>
+                <div class="barra-container"><div class="barra-label"><span>Recuperação</span><span>${e.Recuperacao}</span></div><div class="barra-fundo"><div class="barra-valor barra-azul" style="width:${(e.Recuperacao/tot)*100}%"></div></div></div>
+                <div class="barra-container"><div class="barra-label"><span>Jovens</span><span>${e.Jovem}</span></div><div class="barra-fundo"><div class="barra-valor barra-cinza" style="width:${(e.Jovem/tot)*100}%"></div></div></div>`;
         }
 
-        // ==================== HISTÓRICO ====================
         function renderizarHistorico() {
-            const container = document.getElementById('lista-historico');
-            
-            if (dados.historico.length === 0) {
-                container.innerHTML = '<div class="empty"><span>📜</span>Nenhum evento registado</div>';
-                return;
-            }
-            
-            container.innerHTML = dados.historico.slice(0, 50).map(e => {
-                let classe = '';
-                switch(e.tipo) {
-                    case 'EventoAdicionar': classe = 'evento-adicionar'; break;
-                    case 'EventoCobricao': classe = 'evento-cobricao'; break;
-                    case 'EventoParto': classe = 'evento-parto'; break;
-                    case 'EventoDesmame': classe = 'evento-desmame'; break;
-                    case 'EventoMatadouro': classe = 'evento-matadouro'; break;
-                    case 'EventoVenda': classe = 'evento-venda'; break;
-                    case 'EventoDisponivel': classe = 'evento-disponivel'; break;
-                    case 'EventoRecuperacao': classe = 'evento-recuperacao'; break;
-                }
-                return `
-                    <div class="card ${classe}">
-                        <div class="card-info">${formatarData(e.data)}</div>
-                        <div class="card-title">${e.descricao}</div>
-                    </div>
-                `;
-            }).join('');
+            const c=document.getElementById('lista-historico');
+            if (dados.historico.length===0) { c.innerHTML='<div class="empty"><span>📜</span>Nenhum evento</div>'; return; }
+            c.innerHTML = dados.historico.slice(0,50).map(e=>{let cl='';switch(e.tipo){case'EventoAdicionar':cl='evento-adicionar';break;case'EventoCobricao':cl='evento-cobricao';break;case'EventoParto':cl='evento-parto';break;case'EventoDesmame':cl='evento-desmame';break;case'EventoMatadouro':cl='evento-matadouro';break;case'EventoVenda':cl='evento-venda';break;case'EventoDisponivel':cl='evento-disponivel';break;case'EventoRecuperacao':cl='evento-recuperacao';break;}return`<div class="card ${cl}"><div class="card-info">${formatarData(e.data)}</div><div class="card-title">${e.descricao}</div></div>`;}).join('');
         }
 
-        // ==================== ATUALIZAR UI ====================
-        function atualizarUI() {
-            renderizarAlertas();
-            renderizarPorcas();
-            renderizarVarroes();
-            renderizarLeitoes();
-            renderizarStats();
-            renderizarDespesas();
-            renderizarHistorico();
-        }
-
-        // ==================== VERIFICAR CONEXÃO ====================
-        window.addEventListener('online', () => {
-            document.getElementById('offline-banner').classList.remove('show');
-        });
-        
-        window.addEventListener('offline', () => {
-            document.getElementById('offline-banner').classList.add('show');
-        });
-
-        // ==================== INICIAR ====================
+        function atualizarUI() { renderizarAlertas(); renderizarPorcas(); renderizarVarroes(); renderizarLeitoes(); renderizarStats(); renderizarDespesas(); renderizarHistorico(); }
+        window.addEventListener('online',()=>document.getElementById('offline-banner').classList.remove('show'));
+        window.addEventListener('offline',()=>document.getElementById('offline-banner').classList.add('show'));
         carregarDados();
     </script>
 </body>
