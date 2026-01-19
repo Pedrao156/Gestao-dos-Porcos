@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Quinta Porcos">
+    <meta name="theme-color" content="#2d5016">
     <title>Quinta dos Porcos</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- PWA Icon -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232d5016' width='100' height='100' rx='20'/><text y='70' x='50' text-anchor='middle' font-size='60'>🐷</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232d5016' width='100' height='100' rx='20'/><text y='70' x='50' text-anchor='middle' font-size='60'>🐷</text></svg>">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
@@ -105,9 +109,11 @@
         .filtro-container { margin-bottom: 15px; }
         .filtro-container select { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; }
         .leitao-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; }
-        .leitao-item input { width: 80px; }
+        .leitao-item input[type="number"] { width: 70px; padding: 8px; }
+        .leitao-item input[type="checkbox"] { width: 20px; height: 20px; }
         .offline-banner { background: #dc3545; color: white; text-align: center; padding: 10px; display: none; }
         .offline-banner.show { display: block; }
+        .desmame-info { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -138,7 +144,7 @@
     <div id="modal-varrao" class="modal"><div class="modal-content"><div class="modal-title" id="modal-varrao-titulo">Varrão #</div><div id="modal-varrao-info"></div><div id="modal-varrao-acoes"></div><button class="btn btn-secondary" onclick="fecharModal('modal-varrao')">Fechar</button></div></div>
     <div id="modal-cobricao" class="modal"><div class="modal-content"><div class="modal-title">Registar Cobrição</div><input type="hidden" id="cobricao-porca-num"><div class="form-group"><label>Varrão</label><select id="cobricao-varrao"></select></div><button class="btn btn-warning" onclick="registarCobricao()">Registar</button><button class="btn btn-secondary" onclick="fecharModal('modal-cobricao')">Cancelar</button></div></div>
     <div id="modal-parto" class="modal"><div class="modal-content"><div class="modal-title">Registar Parto</div><input type="hidden" id="parto-porca-num"><h4 style="margin:15px 0 10px;color:#dc3545;">🏷️ Leitões para VENDER</h4><div id="parto-vender-container"></div><button type="button" class="btn btn-warning" onclick="adicionarLeitaoVender()" style="margin-top:10px;">+ Vender</button><h4 style="margin:20px 0 10px;color:#28a745;">🏠 Leitões para FICAR</h4><div id="parto-ficar-container"></div><button type="button" class="btn btn-info" onclick="adicionarLeitaoFicar()" style="margin-top:10px;">+ Ficar</button><div class="resumo-parto" id="resumo-parto"></div><button class="btn btn-primary" onclick="registarParto()">Registar Parto</button><button class="btn btn-secondary" onclick="fecharModal('modal-parto')">Cancelar</button></div></div>
-    <div id="modal-desmame" class="modal"><div class="modal-content"><div class="modal-title">Registar Desmame</div><input type="hidden" id="desmame-porca-num"><p style="margin-bottom:15px;color:#666;">Atribui números aos leitões que ficam:</p><div id="desmame-leitoes-container"></div><div style="background:#fff3cd;padding:10px;border-radius:8px;margin:15px 0;"><small>⚠️ Fêmeas → Porcas jovens | Machos → Varrões jovens</small></div><button class="btn btn-info" onclick="confirmarDesmame()">Confirmar Desmame</button><button class="btn btn-secondary" onclick="fecharModal('modal-desmame')">Cancelar</button></div></div>
+    <div id="modal-desmame" class="modal"><div class="modal-content"><div class="modal-title">Registar Desmame</div><input type="hidden" id="desmame-porca-num"><div class="desmame-info">⚠️ <strong>Fêmeas</strong> → Porcas jovens | <strong>Machos</strong> → Varrões jovens<br><small>Deixa em branco para atribuir número mais tarde</small></div><div id="desmame-leitoes-container"></div><button class="btn btn-info" onclick="confirmarDesmame()">Confirmar Desmame</button><button class="btn btn-secondary" onclick="fecharModal('modal-desmame')">Cancelar</button></div></div>
     <div id="modal-vender-leitoes" class="modal"><div class="modal-content"><div class="modal-title">Vender Leitões</div><p id="vender-leitoes-info"></p><div class="form-group"><label>Valor (€)</label><input type="number" id="vender-leitoes-valor" step="0.01"></div><button class="btn btn-success" onclick="confirmarVendaLeitoes()">Confirmar</button><button class="btn btn-secondary" onclick="fecharModal('modal-vender-leitoes')">Cancelar</button></div></div>
     <div id="modal-atribuir-numero" class="modal"><div class="modal-content"><div class="modal-title">Atribuir Número</div><input type="hidden" id="atribuir-leitao-id"><p id="atribuir-leitao-info"></p><div class="form-group"><label>Número</label><input type="number" id="atribuir-numero"></div><button class="btn btn-purple" onclick="confirmarAtribuirNumero()">Atribuir</button><button class="btn btn-secondary" onclick="fecharModal('modal-atribuir-numero')">Cancelar</button></div></div>
     <div id="modal-nova-despesa" class="modal"><div class="modal-content"><div class="modal-title">Nova Despesa</div><div class="form-group"><label>Categoria</label><select id="despesa-categoria"><option value="Alimentacao">Alimentação</option><option value="Veterinario">Veterinário</option><option value="Equipamento">Equipamento</option><option value="Manutencao">Manutenção</option><option value="Outros">Outros</option></select></div><div class="form-group"><label>Descrição</label><input type="text" id="despesa-descricao"></div><div class="form-group"><label>Valor (€)</label><input type="number" id="despesa-valor" step="0.01"></div><button class="btn btn-danger" onclick="adicionarDespesa()">Adicionar</button><button class="btn btn-secondary" onclick="fecharModal('modal-nova-despesa')">Cancelar</button></div></div>
@@ -198,6 +204,7 @@
                 if (p.numPartos>=8) alertas.push({tipo:'velha',mensagem:`Porca ${p.num} para matadouro (${p.numPartos} partos)`,num:p.num,classe:'urgente'});
                 if (e==='Jovem' && p.dataNascimento && diasEntre(p.dataNascimento,h)>=240) alertas.push({tipo:'pronta',mensagem:`Porca ${p.num} pronta para reproduzir`,num:p.num,classe:'pronta'});
             });
+            // Leitões para FICAR sem número atribuído
             dados.leitoes.filter(l=>l.destino==='Ficar'&&!l.numeroAtribuido).forEach(l => alertas.push({tipo:'atribuir',mensagem:`Leitão #${l.idLeitao} (${l.genero==='Macho'?'♂':'♀'}) precisa de número`,idLeitao:l.idLeitao,classe:'atribuir'}));
             return alertas;
         }
@@ -285,28 +292,79 @@
             document.getElementById('desmame-porca-num').value=n;
             const lf = dados.leitoes.filter(l=>l.maeId===n&&l.destino==='Ficar');
             const c = document.getElementById('desmame-leitoes-container');
-            c.innerHTML = lf.length===0 ? '<p style="color:#666;">Sem leitões para ficar.</p>' : lf.map(l=>`<div class="leitao-item"><span>${l.genero==='Macho'?'♂':'♀'} #${l.idLeitao}</span><span>→ ${l.genero==='Femea'?'Porca':'Varrão'} nº:</span><input type="number" class="desmame-numero" data-id="${l.idLeitao}" data-genero="${l.genero}" style="width:70px;"></div>`).join('');
+            if (lf.length===0) {
+                c.innerHTML='<p style="color:#666;">Não há leitões para ficar desta porca.</p>';
+            } else {
+                c.innerHTML = lf.map(l=>`<div class="leitao-item"><span>${l.genero==='Macho'?'♂':'♀'} Leitão #${l.idLeitao}</span><span>→ ${l.genero==='Femea'?'Porca':'Varrão'} nº:</span><input type="number" class="desmame-numero" data-id="${l.idLeitao}" data-genero="${l.genero}" placeholder="Depois" style="width:70px;"></div>`).join('');
+            }
             fecharModal('modal-porca'); document.getElementById('modal-desmame').classList.add('active');
         }
+        
         function confirmarDesmame() {
-            const np=parseInt(document.getElementById('desmame-porca-num').value), novos=[];
+            const np=parseInt(document.getElementById('desmame-porca-num').value);
+            const novosAnimais = [];
+            const leitoesSemNumero = [];
+            
+            // Processar leitões para ficar
             for (const inp of document.querySelectorAll('.desmame-numero')) {
-                const num=parseInt(inp.value), id=parseInt(inp.dataset.id), g=inp.dataset.genero;
-                if (!num) { alert(`Número para leitão #${id}!`); return; }
-                if (g==='Femea' && dados.porcas.find(p=>p.num===num)) { alert(`Porca ${num} já existe!`); return; }
-                if (g==='Macho' && dados.varroes.find(v=>v.numVarrao===num)) { alert(`Varrão ${num} já existe!`); return; }
-                novos.push({id,num,g});
+                const num = inp.value ? parseInt(inp.value) : null;
+                const id = parseInt(inp.dataset.id);
+                const g = inp.dataset.genero;
+                
+                if (num) {
+                    // Verificar se número já existe
+                    if (g==='Femea' && dados.porcas.find(p=>p.num===num)) { alert(`Porca ${num} já existe!`); return; }
+                    if (g==='Macho' && dados.varroes.find(v=>v.numVarrao===num)) { alert(`Varrão ${num} já existe!`); return; }
+                    novosAnimais.push({id, num, g});
+                } else {
+                    leitoesSemNumero.push(id);
+                }
             }
-            const i=dados.porcas.findIndex(x=>x.num===np); if(i===-1)return;
-            dados.porcas[i].estado={tipo:'Recuperacao',dataFim:adicionarDias(hoje(),8)}; dados.porcas[i].pocilga='Cobricao';
-            novos.forEach(({id,num,g})=>{
-                const l=dados.leitoes.find(x=>x.idLeitao===id);
-                if(g==='Femea') dados.porcas.push({num,pocilga:'Cima',estado:'Jovem',numPartos:0,dataNascimento:l?.dataLeitaoNasc||hoje(),ultimoVarrao:null});
-                else dados.varroes.push({numVarrao:num,estado:'Jovem',dataNascVarrao:l?.dataLeitaoNasc||hoje()});
+            
+            const i = dados.porcas.findIndex(x=>x.num===np); 
+            if(i===-1) return;
+            
+            // Atualizar estado da porca
+            dados.porcas[i].estado = {tipo:'Recuperacao', dataFim:adicionarDias(hoje(),8)}; 
+            dados.porcas[i].pocilga = 'Cobricao';
+            
+            // Criar novos animais (os que têm número)
+            novosAnimais.forEach(({id, num, g}) => {
+                const l = dados.leitoes.find(x=>x.idLeitao===id);
+                if(g==='Femea') {
+                    dados.porcas.push({num, pocilga:'Cima', estado:'Jovem', numPartos:0, dataNascimento:l?.dataLeitaoNasc||hoje(), ultimoVarrao:null});
+                } else {
+                    dados.varroes.push({numVarrao:num, estado:'Jovem', dataNascVarrao:l?.dataLeitaoNasc||hoje()});
+                }
             });
-            dados.leitoes=dados.leitoes.filter(l=>l.maeId!==np);
-            dados.historico.unshift({data:hoje(),tipo:'EventoDesmame',descricao:`Porca ${np} desmamada - ${novos.length} promovidos`,numPorca:np});
-            guardarDados().then(()=>{fecharModal('modal-desmame');alert(`Desmame! ${novos.length} novos animais.`);});
+            
+            // Remover leitões que foram promovidos (com número)
+            const idsPromovidos = novosAnimais.map(x => x.id);
+            dados.leitoes = dados.leitoes.filter(l => {
+                // Remover: leitões para FICAR desta mãe que foram promovidos
+                if (l.maeId === np && l.destino === 'Ficar' && idsPromovidos.includes(l.idLeitao)) {
+                    return false;
+                }
+                // Manter: leitões para FICAR sem número (ficam com alerta)
+                // Manter: leitões para VENDER (não são afetados pelo desmame)
+                return true;
+            });
+            
+            // Marcar leitões sem número como "desmamados mas sem número"
+            leitoesSemNumero.forEach(id => {
+                const idx = dados.leitoes.findIndex(l => l.idLeitao === id);
+                if (idx !== -1) {
+                    dados.leitoes[idx].maeId = null; // Já não tem mãe (desmamado)
+                    dados.leitoes[idx].desmamado = true;
+                }
+            });
+            
+            const msg = novosAnimais.length > 0 
+                ? `Desmame! ${novosAnimais.length} novos animais.${leitoesSemNumero.length > 0 ? ` ${leitoesSemNumero.length} aguardam número.` : ''}`
+                : `Desmame registado! ${leitoesSemNumero.length} leitões aguardam número.`;
+            
+            dados.historico.unshift({data:hoje(), tipo:'EventoDesmame', descricao:`Porca ${np} desmamada`, numPorca:np});
+            guardarDados().then(()=>{fecharModal('modal-desmame'); alert(msg);});
         }
 
         function renderizarVarroes() {
@@ -339,7 +397,11 @@
         function renderizarLeitoes() {
             const c = document.getElementById('lista-leitoes');
             if (dados.leitoes.length===0) { c.innerHTML='<div class="empty"><span>🐽</span>Nenhum leitão</div>'; document.getElementById('btn-vender-leitoes').style.display='none'; return; }
-            c.innerHTML = dados.leitoes.map(l=>{ const sn=l.destino==='Ficar'&&!l.numeroAtribuido; return `<div class="leitao-card ${sn?'sem-numero':''}"><span class="leitao-genero">${l.genero==='Macho'?'♂':'♀'}</span><div class="leitao-info"><strong>Leitão #${l.idLeitao}</strong>${sn?'<span class="badge badge-sem-numero">Sem nº</span>':''}<br><small>Mãe: ${l.maeId} • ${l.destino==='Vender'?'💰 Vender':'🏠 Ficar'}</small><br><small>Nasc: ${formatarData(l.dataLeitaoNasc)}</small></div>${l.destino==='Vender'?`<input type="checkbox" class="leitao-checkbox" value="${l.idLeitao}" onchange="toggleLeitaoSelecionado(${l.idLeitao})">`:''}${sn?`<button class="btn-alerta purple" onclick="abrirModalAtribuirNumero(${l.idLeitao})" style="margin:0;padding:8px;">Atribuir</button>`:''}</div>`; }).join('');
+            c.innerHTML = dados.leitoes.map(l=>{ 
+                const sn = l.destino==='Ficar' && !l.numeroAtribuido; 
+                const paraVender = l.destino==='Vender';
+                return `<div class="leitao-card ${sn?'sem-numero':''}"><span class="leitao-genero">${l.genero==='Macho'?'♂':'♀'}</span><div class="leitao-info"><strong>Leitão #${l.idLeitao}</strong>${sn?'<span class="badge badge-sem-numero">Sem nº</span>':''}${paraVender?'<span class="badge" style="background:#ffc107;color:#333;">Vender</span>':''}<br><small>${l.maeId ? `Mãe: ${l.maeId}` : 'Desmamado'} • ${l.destino==='Vender'?'💰':'🏠'}</small><br><small>Nasc: ${formatarData(l.dataLeitaoNasc)}</small></div>${paraVender?`<input type="checkbox" class="leitao-checkbox" value="${l.idLeitao}" onchange="toggleLeitaoSelecionado(${l.idLeitao})">`:''}${sn?`<button class="btn-alerta purple" onclick="abrirModalAtribuirNumero(${l.idLeitao})" style="margin:0;padding:8px;">Atribuir</button>`:''}</div>`; 
+            }).join('');
             atualizarBotaoVender();
         }
         function toggleLeitaoSelecionado(id) { const i=leitoesSelecionados.indexOf(id); if(i===-1)leitoesSelecionados.push(id); else leitoesSelecionados.splice(i,1); atualizarBotaoVender(); }
